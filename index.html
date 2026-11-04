@@ -116,25 +116,27 @@ document.getElementById('zoomdk').addEventListener('click',()=>map.fitBounds([[5
 document.getElementById('linecount').textContent='('+DATA.lines.length+')';document.getElementById('citycount').textContent='('+DATA.items.cities.length+')';document.getElementById('sightcount').textContent='('+DATA.items.sights.length+')';
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}</script>
 <script>
-// OpenStreetMap kaarttegels: nieuwe wegen en plaatsnamen bij elk zoomniveau.
-// De oorspronkelijke reliëfkaart blijft alleen zichtbaar totdat tegels geladen zijn.
+// Online wegenkaart met een veilige terugval naar de bestaande reliëfkaart.
 (function(){
   const map=window.roadtripMap;
   const note=document.getElementById('mapstatus');
-  const roads=L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
-    maxZoom:19,maxNativeZoom:19,subdomains:'abcd',
+  const roads=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,maxNativeZoom:19,
     attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
   });
   let loaded=false;
   roads.on('tileload',function(){
     if(loaded)return;
     loaded=true;
+    // Verwijder de statische achtergrond pas nadat een echte kaarttegel binnen is.
     if(window.roadtripTerrain && map.hasLayer(window.roadtripTerrain))map.removeLayer(window.roadtripTerrain);
     if(window.roadtripBorders && map.hasLayer(window.roadtripBorders))map.removeLayer(window.roadtripBorders);
     if(window.roadtripNames && map.hasLayer(window.roadtripNames))map.removeLayer(window.roadtripNames);
-    if(note)note.textContent='Wegenkaart geladen. Zoom in voor kleinere wegen, dorpen en straatnamen.';
+    if(note)note.textContent='Wegenkaart geladen. Zoom in voor kleinere wegen en plaatsnamen.';
   });
-  roads.on('tileerror',function(){if(!loaded && note)note.textContent='De online wegenkaart wordt niet geladen. Open deze kaart via de website (GitHub Pages) en controleer of kaarttegels worden toegestaan.';});
+  roads.on('tileerror',function(){
+    if(!loaded && note)note.textContent='De wegenkaart kan niet worden geladen; de bestaande achtergrond blijft beschikbaar.';
+  });
   roads.addTo(map);
   roads.bringToBack();
 })();
